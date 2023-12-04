@@ -12,10 +12,10 @@ with file:
         last = ""
         lineList = (line)
 
-        pointer = 0
+        firstPointer = 0
 
-        while pointer <= len(lineList):
-            selection = lineList[:pointer]
+        while firstPointer <= len(lineList):
+            selection = lineList[:firstPointer]
             for num in numList:
                 if num in selection:
 
@@ -26,10 +26,10 @@ with file:
                     break
             if (first != ""):
                 break
-            pointer += 1
-        pointer = len(lineList) - 1
-        while pointer >= 0:
-            selection = lineList[pointer:]
+            firstPointer += 1
+        lastPointer = len(lineList) - 1
+        while lastPointer >= 0:
+            selection = lineList[lastPointer:]
             for num in numList:
                 if num in selection:
                     if (num in num_dict):
@@ -39,7 +39,7 @@ with file:
                     break
             if (last != ""):
                 break
-            pointer -= 1
+            lastPointer -= 1
         total += int(first + last)
     print(total)
                 
