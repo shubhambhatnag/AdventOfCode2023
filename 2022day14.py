@@ -1,68 +1,153 @@
-filename = '142022.txt'
-file = open("inputs/"+filename, 'r')
-import matplotlib.pyplot as plt
-walls = set()
-highest_x = None
-lowest_x = None
-highest_y = None
-for line in file.readlines():
-    line = line.rstrip()
+def man_dist(a: tuple[int, int], b: tuple[int, int]) -> int:
+    """Returns the Manhattan distance between two points"""
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
-    line = line.split(' -> ')
-    
-    
-    for i in range(len(line)):
-        line[i] = line[i].split(',')
-        for j in range(len(line[i])):
-            line[i][j] = int(line[i][j])
+class sensor:
+    """A sensor has its center position and its exclusion range"""
 
-    #print(line)
-    for point in range(len(line) - 1):
-        point1 = line[point]
-        point2 = line[point + 1]
-   
-        if (line[point][0] == line[point + 1][0]):
-       
-            for y in range(min(point1[1], point2[1]), max(point1[1], point2[1]) + 1):
-                if (highest_y == None or y > highest_y):
-                    highest_y = y
-                
-                walls.add((line[point][0], y))
-        else:
-            for x in range(min(point1[0], point2[0]), max(point1[0], point2[0]) + 1):
-                if (highest_x == None or y > highest_x):
-                    highest_x = x
-                if (lowest_x == None or y < lowest_x):
-                    lowest_x = x
-                walls.add((x, line[point][1]))
-sandCount = 0
-limit = False
+    def __init__(self, pos: tuple[int, int], beacon: tuple[int, int]) -> None:
+        self.position: tuple[int, int] = pos
+        self.range: int = man_dist(beacon, self.position)
 
-while (not limit):
-    rest = False
-    
-    sandPos = (500, 0)
-    while (not rest):
-   
-        if ((sandPos[0], sandPos[1] + 1) in walls):
-            if ((sandPos[0] - 1, sandPos[1] + 1) in walls):
-                if ((sandPos[0] + 1, sandPos[1] + 1) in walls):
-                    rest = True
-                    if (sandPos[1] == 0):
-                        limit = True
-                    walls.add(sandPos)
-                    sandCount += 1
-                else:
-                    sandPos = (sandPos[0] + 1, sandPos[1] + 1)
+    def in_exclusion_range(self, point: tuple[int, int]) -> bool:
+        """Returns True if point is inside this sensor's exclusion range"""
+        return self.range >= man_dist(self.position, point)
+
+
+def parse(string: str) -> list[sensor]:
+    """Parses the advent input and returns the list of sensors"""
+    result: list[sensor] = []
+    for line in string.splitlines():
+        # line: "Sensor at x=2391367, y=3787759: closest beacon is at x=2345659, y=4354867"
+        first, second = line.split(": ")
+
+        # first:  "Sensor at x=2391367, y=3787759"
+        sensor_x, sensor_y = first[12:].split(", ")
+        sensor_x = int(sensor_x)
+        sensor_y = int(sensor_y[2:])
+
+        # second: "closest beacon is at x=2345659, y=4354867"
+        beacon_x, beacon_y = second[23:].split(", ")
+        beacon_x = int(beacon_x)
+        beacon_y = int(beacon_y[2:])
+
+        result.append(sensor((sensor_x, sensor_y), (beacon_x, beacon_y)))
+
+    return result
+
+
+def is_free(point: tuple[int, int], sensors: list[sensor]) -> bool:
+    """Returns True if point is outside the exclusion range of every sensor in sensors"""
+    for sensor in sensors:
+        if sensor.in_exclusion_range(point):
+            return False
+    return True
+
+
+def main(input: str) -> int:
+    search_area = 4000000  # This parameter was given by the problem. It's the area in which we are looking for the free point
+    sensors = parse(input)
+    lines: dict[tuple[bool, int], int] = {}
+
+    for sensor in sensors:
+        r"""
+        This section calculates all of the lines that pass along the confines of each sensor's exclusion zone.
+        A line is defined as y=mx+q where m is either 1 or -1.
+
+                \top descending
+                 \
+                  \     /top rising
+                   \   /
+                    \ /
+                     \
+                    / \
+                   / - \
+                  / / \ \
+                 / /   \ \
+        \       / /     \ \
+         \     / /       \ \     /bottom rising
+          \   / /         \ \   /
+           \ / /           \ \ /
+            \ -      +      - /
+           / \ \           / / \
+          /   \ \         / /   \
+         /     \ \       / /     \
+        /       \ \     / /
+                 \ \   / /
+                  \ \ / /
+                   \ - /
+                    \ /
+                     /
+                    / \
+                   /   \bottom descending
+        """
+
+        top_rising = (
+            True,  # m is 1
+            sensor.position[1] - sensor.range - 1 - sensor.position[0],  # this is q
+        )
+
+        top_descending = (
+            False,  # m is -1
+            sensor.position[1] - sensor.range - 1 + sensor.position[0],
+        )
+
+        bottom_rising = (
+            True,
+            sensor.position[1] + sensor.range + 1 - sensor.position[0],
+        )
+
+        bottom_descending = (
+            False,
+            sensor.position[1] + sensor.range + 1 + sensor.position[0],
+        )
+
+        for line in [top_rising, top_descending, bottom_rising, bottom_descending]:
+            """I'm counting the occurrences of each line"""
+            if line in lines:
+                lines[line] += 1
             else:
-                sandPos = (sandPos[0] - 1, sandPos[1] + 1)
-        else:
-            sandPos = (sandPos[0], sandPos[1] + 1)
+                lines[line] = 1
 
-print(sandCount)
-            
+    rising_lines: list[int] = []
+    descending_lines: list[int] = []
+
+    for line, count in lines.items():
+        """
+        I only keep the lines that appear at least two times.
+        I do this because I know that the single free spot lies where 4 lines intersect
+        (2 rising and 2 descending)
+        """
+        if count > 1:
+            if line[0]:
+                descending_lines.append(line[1])
+            else:
+                rising_lines.append(line[1])
+
+    points: list[tuple[int, int]] = []
+
+    for rising_q in rising_lines:
+        for descending_q in descending_lines:
+            """I calculate the intersections between all the rising and descending lines i got"""
+            x = (rising_q - descending_q) // 2
+            y = x + descending_q
+            point = (x, y)
+            points.append(point)
+
+    for point in points:
+        """I check which of the intersections is the free point"""
+        if (
+            (0 <= point[1] <= search_area)
+            and (0 <= point[0] <= search_area)
+            and is_free(point, sensors)
+        ):
+            return point[0] * 4000000 + point[1]
+
+    raise ValueError  # If the point is not found then the input is wrong
 
 
-
-    
+if __name__ == "__main__":
+    with open("inputs/152022.txt") as f:
+        input = f.read()
+    print(main(input))
