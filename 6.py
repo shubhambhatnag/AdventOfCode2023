@@ -17,15 +17,20 @@ print(distances)
 
 # map each time to each distance
 
+races = []
+
 for i in range(len(times)):
-    races[int(times[i])] = int(distances[i])
+    races.append((int(times[i]), int(distances[i])))
+
 total = 1
-for time in races:
-    record = races[time]
+for race in races:
+    time = race[0]
+    record = race[1]
     workingTimes = 0
-    for i in range(time+1):
-        if ((i * (time - i)) > record):
+    for i in range(time + 1):
+        if i * (time - i) > record:
             workingTimes += 1
     print(workingTimes)
     total *= workingTimes
+
 print(total)
