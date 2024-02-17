@@ -20,70 +20,74 @@ def spread(x, y):
     global inp
     if (x,y) in graph:
         return
+    if (x,y) not in graph:
+        graph[(x,y)] = []
     if inp[x][y] == '.':
         return
     elif inp[x][y] == "S":
         
         if (x-1 >= 0):
             
-            if inp[x-1][y] == "-" or inp[x-1][y] == "7" or inp[x-1][y] == "J":
+            if inp[x-1][y] == "|" or inp[x-1][y] == "7" or inp[x-1][y] == "F":
+                
                 graph[(x,y)].append((x-1,y))
                 spread(x-1,y)
         if (x+1 < len(inp[0])):
             
-            if inp[x+1][y] == "-" or inp[x+1][y] == "L" or inp[x+1][y] == "F":
+            if inp[x+1][y] == "|" or inp[x+1][y] == "L" or inp[x+1][y] == "J":
+                
                 graph[(x,y)].append((x+1,y))
                 spread(x+1,y)
         if (y-1 >= 0):
-            if inp[x][y-1] == "|" or inp[x][y-1] == "7" or inp[x][y-1] == "F":
+            if inp[x][y-1] == "-" or inp[x][y-1] == "7" or inp[x][y-1] == "J":
                 graph[(x,y)].append((x,y-1))
                 spread(x,y-1)
         if (y+1 < len(inp[x])):
-            if inp[x][y+1] == "|" or inp[x][y+1] == "J" or inp[x][y+1] == "L":
+            if inp[x][y+1] == "-" or inp[x][y+1] == "F" or inp[x][y+1] == "L":
                 graph[(x,y)].append((x,y+1))
                 spread(x,y+1)
     elif inp[x][y] == "|":
-        if (y-1 >= 0):
+        if (y-1 >= 0 and inp[x][y-1] != "."):
             graph[(x,y)].append((y-1,y))
             spread(x-1,y)
-        if (y+1 < len(inp)):
+        if (y+1 < len(inp) and inp[x][y+1] != "."):
             graph[(x,y)].append((y+1,y))
             spread(y+1,y)
     elif inp[x][y] == "-":
-        if (x-1 >= 0):
+        if (x-1 >= 0 and inp[x-1][y] != "."):
             graph[(x,y)].append((x-1,y))
             spread(x-1,y)
-        if (x+1 < len(inp[0])):
+        if (x+1 < len(inp[0]) and inp[x+1][y] != "."):
             graph[(x,y)].append((x+1,y))
             spread(x+1,y)
     elif inp[x][y] == "L":
-        if (x+1 < len(inp[0])):
+        if (x+1 < len(inp[0]) and inp[x+1][y] != "."):
             graph[(x,y)].append((x+1,y))
             spread(x+1,y)
-        if (y-1 >= 0):
+        if (y-1 >= 0 and inp[x][y-1] != "."):
             graph[(x,y)].append((y-1,y))
             spread(x-1,y)
     #J is a 90-degree bend connecting north and west.
     elif inp[x][y] == "J":
-        if (x-1 >= 0):
+        if (x-1 >= 0 and inp[x-1][y] != "."):
             graph[(x,y)].append((x-1,y))
             spread(x-1,y)
-        if (y-1 >= 0):
+        if (y-1 >= 0 and inp[x][y-1] != "."):
             graph[(x,y)].append((y-1,y))
             spread(x,y-1)
     #7 is a 90-degree bend connecting south and west.
     elif inp[x][y] == "7":
-        if (x-1 >= 0):
+        if (x-1 >= 0 and inp[x-1][y] != "."):
             graph[(x,y)].append((x-1,y))
             spread(x-1,y)
-        if (y+1 < len(inp)):
+        if (y+1 < len(inp) and inp[x][y+1] != "."):
             graph[(x,y)].append((x,y+1))
             spread(x,y+1)
     elif inp[x][y] == "F":
-        if (x+1 < len(inp[0])):
+        if (x+1 < len(inp[0]) and inp[x+1][y] != "."):
             graph[(x,y)].append((x+1,y))
             spread(x+1,y)
-        if (y+1 < len(inp)):
+        if (y+1 < len(inp) and inp[x][y+1] != "."):
             graph[(x,y)].append((x,y+1))
             spread(x,y+1)
     
@@ -98,5 +102,6 @@ for i in range(len(inp)):
 graph = {}
 
 spread(start[0], start[1])
+
 
 print(graph)
